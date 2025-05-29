@@ -62,6 +62,8 @@ RUN poetry install --no-root
 
 COPY ./gitchameleon /app/gitchameleon  
 COPY ./dataset/dataset.jsonl /app/dataset.jsonl
+COPY ./dataset/hidden_tests /app/hidden_tests
+COPY ./dataset/visible_tests /app/visible_tests
 
 # Use bash as the entrypoint.
 ENTRYPOINT ["/bin/bash"]

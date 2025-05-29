@@ -215,10 +215,10 @@ def print_summary_stats(results_df: pd.DataFrame) -> None:
 
 def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Process a JSONL file in parallel with eval_sample and save results.")
-    parser.add_argument("dataset_file", help="Path to the dataset JSONL file.")
-    parser.add_argument("solution_file", help="Path to the solutions JSONL file to evaluate.")
-    parser.add_argument("env_dir", help="Path to the dir where environments live")
-    parser.add_argument("test_dir", help="Path to the dir where test files are stored")
+    parser.add_argument("--dataset_file", help="Path to the dataset JSONL file.")
+    parser.add_argument("--solution_file", help="Path to the solutions JSONL file to evaluate.")
+    parser.add_argument("--env_dir", help="Path to the dir where environments live")
+    parser.add_argument("--test_dir", help="Path to the dir where test files are stored")
     parser.add_argument(
         "--workers",
         type=int,
@@ -235,10 +235,10 @@ def main():
     manual_tests = load_manual_tests(args.dataset_file)
     solutions = load_solutions(args.solution_file)
 
-    results_df = verify_solutions(manual_tests, solutions, args.env_dir, args.test_dir, args.max_workers)
+    results_df = verify_solutions(manual_tests, solutions, args.env_dir, args.test_dir, args.workers)
 
     # Save CSV
-    output_csv = os.path.splitext(args.jsonl_file)[0] + "_eval_results.csv"
+    output_csv = os.path.splitext(args.solution_file)[0] + "_eval_results.csv"
     results_df.to_csv(output_csv, index=False)
     print(f"[✓] Saved results to {output_csv}")
 
