@@ -19,7 +19,11 @@ Before you begin, ensure you have the following installed:
 1. [Poetry](https://python-poetry.org/docs/)
 
 ### 🏗️ Harness Setup
-To set up the evaluation environment, run:
+1. Clone the repository:
+```
+git clone https://github.com/mrcabbage972/GitChameleonBenchmark.git
+```
+2. Run the setup command:
 ```
 make evals-setup
 ```
