@@ -92,7 +92,7 @@ def get_example_id(record):
     return id
 
 
-def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir):
+def process_record(idx, record, manual_tests, env_dir, test_dir):
     """
     Process one JSON record: run eval_sample() and return a dict
     with example_id, code_id, output, passed, compiled, and idx.
@@ -158,10 +158,71 @@ def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir)
     return res
 
 
-def main():
+def load_manual_tests(dataset_file_path: str) -> dict[int, str]:
+    manual_tests = {}
+    with open(dataset_file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                data = json.loads(line)
+                manual_tests[int(data["example_id"])] = data["test"]
+    return manual_tests
+
+
+def load_solutions(solution_path: str) -> list[str]:
+    outputs = []
+    with open(solution_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                outputs.append(json.loads(line))
+    return outputs
+
+
+def verify_solutions(manual_tests, solutions, env_dir, test_dir, max_workers) -> pd.DataFrame:
+    results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as exe:
+        futures = [
+            exe.submit(
+                process_record,
+                idx,
+                rec,
+                manual_tests,
+                env_dir,
+                test_dir,
+            )
+            for idx, rec in enumerate(solutions)
+        ]
+        for fut in tqdm(as_completed(futures), total=len(futures), desc="Evaluating"):
+            results.append(fut.result())
+
+        # Sort back into original order
+        results.sort(key=lambda row: row["idx"])
+        # Build DataFrame, drop the helper idx column
+        df = pd.DataFrame(results).drop(columns=["idx"])
+        return df
+
+
+def print_summary_stats(results_df: pd.Dataframe):
+    # fraction passed
+    passed = results_df["passed"].sum()
+    total = len(results_df)
+    print(f"[✓] {passed}/{total} tests passed (hidden) ({passed / total:.2%})")
+    compiled = results_df["compiled"].sum()
+    print(f"[✓] {compiled}/{total} tests compiled (hidden) ({compiled / total:.2%})")
+
+    # fraction passed manual
+    passed_manual = results_df["passed_manual"].sum()
+    total_manual = len(results_df)
+    print(f"[✓] {passed_manual}/{total_manual} tests passed (visible) ({passed_manual / total_manual:.2%})")
+    compiled_manual = results_df["compiled_manual"].sum()
+    print(f"[✓] {compiled_manual}/{total_manual} tests compiled (visible) ({compiled_manual / total_manual:.2%})")
+
+
+def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Process a JSONL file in parallel with eval_sample and save results.")
-    parser.add_argument("data_file", help="Path to the dataset JSONL file to process")
-    parser.add_argument("jsonl_file", help="Path to the model outputs JSONL file to process")
+    parser.add_argument("dataset_file", help="Path to the dataset JSONL file.")
+    parser.add_argument("solution_file", help="Path to the solutions JSONL file to evaluate.")
     parser.add_argument("env_dir", help="Path to the dir where environments live")
     parser.add_argument("test_dir", help="Path to the dir where test files are stored")
     parser.add_argument(
@@ -170,68 +231,24 @@ def main():
         default=os.cpu_count() or 4,
         help="Number of threads to use (default: CPU count)",
     )
+    return parser
 
+
+def main():
+    parser = get_arg_parser()
     args = parser.parse_args()
 
-    # Load JSONL records
-    starting_codes = {}
-    manual_tests = {}
-    with open(args.data_file, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                data = json.loads(line)
-                manual_tests[int(data["example_id"])] = data["test"]
+    manual_tests = load_manual_tests(args.dataset_file)
+    solutions = load_solutions(args.solution_file)
 
-    # Load JSONL records
-    outputs = []
-    with open(args.jsonl_file, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                outputs.append(json.loads(line))
-
-    results = []
-    # Kick off parallel tasks
-    with ThreadPoolExecutor(max_workers=args.workers) as exe:
-        futures = [
-            exe.submit(
-                process_record,
-                idx,
-                rec,
-                starting_codes,
-                manual_tests,
-                args.env_dir,
-                args.test_dir,
-            )
-            for idx, rec in enumerate(outputs)
-        ]
-        for fut in tqdm(as_completed(futures), total=len(futures), desc="Evaluating"):
-            results.append(fut.result())
-
-    # Sort back into original order
-    results.sort(key=lambda row: row["idx"])
-    # Build DataFrame, drop the helper idx column
-    df = pd.DataFrame(results).drop(columns=["idx"])
+    results_df = verify_solutions(manual_tests, solutions, args.env_dir, args.test_dir, args.max_workers)
 
     # Save CSV
     output_csv = os.path.splitext(args.jsonl_file)[0] + "_eval_results.csv"
-    df.to_csv(output_csv, index=False)
+    results_df.to_csv(output_csv, index=False)
     print(f"[✓] Saved results to {output_csv}")
 
-    # fraction passed
-    passed = df["passed"].sum()
-    total = len(df)
-    print(f"[✓] {passed}/{total} tests passed (hidden) ({passed / total:.2%})")
-    compiled = df["compiled"].sum()
-    print(f"[✓] {compiled}/{total} tests compiled (hidden) ({compiled / total:.2%})")
-
-    # fraction passed manual
-    passed_manual = df["passed_manual"].sum()
-    total_manual = len(df)
-    print(f"[✓] {passed_manual}/{total_manual} tests passed (visible) ({passed_manual / total_manual:.2%})")
-    compiled_manual = df["compiled_manual"].sum()
-    print(f"[✓] {compiled_manual}/{total_manual} tests compiled (visible) ({compiled_manual / total_manual:.2%})")
+    print_summary_stats(results_df)
 
 
 if __name__ == "__main__":
