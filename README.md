@@ -12,7 +12,7 @@ This is an evaluation harness for the GitChameleon dataset.
 
 [![CI](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml)
 
-## Usage
+## 🚀 Usage
 ### 📦 Prerequisites
 Before you begin, ensure you have the following installed:
 1. [Python 3.9+](https://www.python.org/downloads/)
