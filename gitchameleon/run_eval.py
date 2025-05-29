@@ -14,17 +14,16 @@ from tqdm import tqdm
 from gitchameleon.eval_sample import eval_sample
 
 
-def run_script(env_path, py_file="temp.py"):
+def run_script(env_path: str, py_file: str="temp.py") -> dict:
     python_executable = os.path.join(env_path, "bin", "python")
     if py_file is None:
-        return False, False, "", ""
+        raise RuntimeError(f"Python is missing from the environment at {env_path}")
 
     try:
         with open(py_file, "r") as file:
             file.read()
-    except Exception as e:
-        print(py_file, type(py_file))
-        print("Error at py_file open:", e)
+    except Exception as e:        
+        raise RuntimeError("Error at py_file open:", e)
 
     error_log = ""
     try:
@@ -50,7 +49,7 @@ def run_script(env_path, py_file="temp.py"):
     try:
         os.remove(py_file)
     except Exception as e:
-        print(e)
+        raise RuntimeError("Failed cleaning up", e)
     result = {
         "compiled_manual": bool(1 - compile_code),
         "passed_manual": bool(1 - exit_code),
@@ -63,16 +62,12 @@ def extract_code(text: str) -> str:
     """Parse raw string into python code"""
     try:
         match = re.search(r"```python(.*?)```", text, re.DOTALL)
-    except Exception:
-        try:
-            match = re.search(r"```(.*?)```", rf"{text}", re.DOTALL)  # anthropic
-        except Exception as e:
-            print("Error: ", e)
-            match = None
+    except Exception:        
+        match = re.search(r"```(.*?)```", rf"{text}", re.DOTALL)  # anthropic        
     return match.group(1) if match else text
 
 
-def get_solution(record):
+def get_solution(record: dict) -> str:
     solution = record.get("answer", "")
     if solution == "":
         solution = record.get("solution", "")
@@ -98,12 +93,11 @@ def process_record(idx, record, manual_tests, env_dir, test_dir):
     with example_id, code_id, output, passed, compiled, and idx.
     """
     example_id = get_example_id(record)
-    try:
-        example_id = int(example_id)
-        manual_test = manual_tests[example_id]
-        solution = get_solution(record)
-        env_path = os.path.join(env_dir, f"gcham_venv_{example_id}")
-
+    example_id = int(example_id)
+    solution = get_solution(record)
+    env_path = os.path.join(env_dir, f"gcham_venv_{example_id}")
+    manual_test = manual_tests[example_id]
+    try:        
         test_file_path = os.path.join(test_dir, f"test_sample_{example_id}.py")
         with open(test_file_path, "r") as tf:
             test_file_content = tf.read()

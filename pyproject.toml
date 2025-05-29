@@ -20,4 +20,4 @@ line-length = 120
 exclude = ["dataset"]
 
 [tool.pyright]
-exclude = ["dataset"]
+exclude = ["dataset", ".dataset_venvs"]
