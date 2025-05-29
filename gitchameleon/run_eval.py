@@ -203,7 +203,7 @@ def verify_solutions(manual_tests, solutions, env_dir, test_dir, max_workers) ->
         return df
 
 
-def print_summary_stats(results_df: pd.Dataframe):
+def print_summary_stats(results_df: pd.DataFrame):
     # fraction passed
     passed = results_df["passed"].sum()
     total = len(results_df)

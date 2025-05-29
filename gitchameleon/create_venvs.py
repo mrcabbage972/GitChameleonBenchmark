@@ -3,7 +3,10 @@ import json
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+from tqdm import tqdm
 
 # Mapping of Python versions to pyenv-installed versions
 python_versions = {"3.7": "3.7.17", "3.9": "3.9.19", "3.10": "3.10.14"}
@@ -211,12 +214,64 @@ def generate_env_id(row):
     return hashlib.sha256(unique_str.encode()).hexdigest()[:8]
 
 
+def process_line(line: str, start_id: int, end_id: int, create_anyway: bool, base_path: str) -> bool:
+    sample = json.loads(line)
+    python_version = sample.get("python_version")
+    example_id = sample.get("example_id")
+    library = sample.get("library")
+    version = sample.get("version")
+    additional_dependencies = sample.get("additional_dependencies", "")
+    if int(example_id) < start_id or int(example_id) > end_id:
+        return True
+    if python_version and example_id:
+        pyenv_version = python_versions.get(python_version)
+        if not pyenv_version:
+            print(f"Unsupported Python version {python_version} for example {example_id}.")
+            return False
+
+        env_name = f"gcham_venv_{example_id}"
+        env_path = Path(base_path, env_name)
+
+        python_exec = Path(env_path, "bin", "python")
+        if not os.path.exists(python_exec):
+            print(f"Python executable not found for {example_id}. Creating environment...")
+            create_virtual_environment(
+                env_path,
+                pyenv_version,
+                create_anyway=create_anyway,
+                library_to_check=library,
+            )
+            returncode = install_packages(
+                env_path,
+                library,
+                version,
+                additional_dependencies,
+                python_version,
+            )
+            if returncode != 0:
+                return False
+        else:
+            print(f"Environment already exists for {example_id}.")
+            if args.install_pkgs:
+                returncode = install_packages(
+                    env_path,
+                    library,
+                    version,
+                    additional_dependencies,
+                    python_version,
+                )
+                if returncode != 0:
+                    return False
+    return True
+
+
 def main(args):
     jsonl_file = args.dataset
     base_path = args.base_path
     create_anyway = args.create_anyway
     start_id = args.start
     end_id = args.end
+    concurrency = args.concurrency
 
     # Ensure the base path exists
     os.makedirs(base_path, exist_ok=True)
@@ -224,58 +279,17 @@ def main(args):
 
     # Read the JSONL file and process only lines between start_id and end_id (inclusive)
     with open(jsonl_file, "r") as file:
-        for line_number, line in enumerate(file, start=1):
-            sample = json.loads(line)
-            python_version = sample.get("python_version")
-            example_id = sample.get("example_id")
-            library = sample.get("library")
-            version = sample.get("version")
-            additional_dependencies = sample.get("additional_dependencies", "")
-            if int(example_id) < start_id or int(example_id) > end_id:
-                continue
-            if python_version and example_id:
-                pyenv_version = python_versions.get(python_version)
-                if not pyenv_version:
-                    print(f"Unsupported Python version {python_version} for example {example_id}.")
-                    continue
+        lines = file.readlines()
 
-                env_name = f"gcham_venv_{example_id}"
-                env_path = Path(base_path, env_name)
+    failed_count = 0
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = [executor.submit(process_line, line, start_id, end_id, create_anyway, base_path) for line in lines]
+        for future in tqdm(as_completed(futures)):
+            success = future.result()
+            if not success:
+                failed_count += 1
 
-                python_exec = Path(env_path, "bin", "python")
-                if not os.path.exists(python_exec):
-                    print(f"Python executable not found for {example_id}. Creating environment...")
-                    create_virtual_environment(
-                        env_path,
-                        pyenv_version,
-                        create_anyway=create_anyway,
-                        library_to_check=library,
-                    )
-                    returncode = install_packages(
-                        env_path,
-                        library,
-                        version,
-                        additional_dependencies,
-                        python_version,
-                    )
-                    if returncode != 0:
-                        failed_count.append(example_id)
-                else:
-                    print(f"Environment already exists for {example_id}.")
-                    if args.install_pkgs:
-                        returncode = install_packages(
-                            env_path,
-                            library,
-                            version,
-                            additional_dependencies,
-                            python_version,
-                        )
-                        if returncode != 0:
-                            failed_count.append(example_id)
-
-    print(f"Failed: {len(failed_count)}")
-    for example_id in failed_count:
-        print(f"Failed to create environment for example ID: {example_id}")
+    print(f"Failed count: {failed_count}")
 
 
 if __name__ == "__main__":
@@ -286,7 +300,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--base_path",
         type=str,
-        default="eval_venvs",
+        default=".dataset_venvs",
         help="Base path for virtual environments.",
     )
     parser.add_argument(
@@ -313,5 +327,13 @@ if __name__ == "__main__":
         default=sys.maxsize,
         help="End line number (inclusive) until which to create the environments.",
     )
+
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=4,
+        help="The concurrency with which to create the environments.",
+    )
+
     args = parser.parse_args()
     main(args)

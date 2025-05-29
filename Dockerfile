@@ -50,8 +50,6 @@ RUN curl -sSL "https://install.python-poetry.org" -o get-poetry.py && \
     python3 get-poetry.py --version $POETRY_VERSION && \
     rm get-poetry.py
 
-COPY ./gitchameleon /app/gitchameleon  
-
 # Copy pyproject.toml and poetry.lock (if available)
 COPY ./pyproject.toml ./poetry.lock /app/
 
@@ -61,6 +59,9 @@ WORKDIR /app
 
 # Install Python dependencies using Poetry
 RUN poetry install --no-root
+
+COPY ./gitchameleon /app/gitchameleon  
+COPY ./dataset/dataset.jsonl /app/dataset.jsonl
 
 # Use bash as the entrypoint.
 ENTRYPOINT ["/bin/bash"]

@@ -10,6 +10,11 @@ docker-build:
 docker-run:
 	docker run --rm -it -v "./.dataset_venvs:/app/.dataset_venvs" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && exec bash"
 
+evals-setup: docker-build build-venvs
+
+build-venvs:
+	docker run --rm -it -v "./.dataset_venvs:/app/.dataset_venvs" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && poetry run python gitchameleon/create_venvs.py --end 3 --base_path .dataset_venvs --dataset dataset.jsonl"
+
 lint-all: format ruff-fix sort-imports pyright
 
 format:
