@@ -1,10 +1,12 @@
-# GitChameleon
 <p align="center">
   <img src="./images/gc-icon.png"
        alt="GitChameleon icon"
        width="120"
        style="margin:0 0 1em 0;">
 </p>
+
+# GitChameleon
+
 
 This is an evaluation harness for the GitChameleon dataset.
 
