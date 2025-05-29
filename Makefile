@@ -30,4 +30,9 @@ sort-imports:
 	poetry run ruff check --select I --fix
 
 run-eval:
-	docker run --rm -it -v "./rag_codestral_k1.jsonl:/app/solution.jsonl" -v "./.dataset_venvs:/app/.dataset_venvs" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests"
+	@if [ -z "$(SOLUTION_PATH)" ]; then \
+	  echo "Usage: make run-eval SOLUTION_PATH=<an absolute path to the solution file>"; exit 1; \
+	else \
+	  docker run --rm -it -v "$(SOLUTION_PATH):/app/solution.jsonl" -v "./.dataset_venvs:/app/.dataset_venvs" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests"; \
+	fi
+	
