@@ -8,7 +8,7 @@ docker-build:
 	docker build . -t $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 docker-run:
-	docker run --rm -it -v ".:/app/repo" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && exec bash"
+	docker run --rm -it -v "./.dataset_venvs:/app/.dataset_venvs" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && exec bash"
 
 lint-all: format ruff-fix sort-imports pyright
 

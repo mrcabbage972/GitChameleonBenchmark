@@ -42,8 +42,25 @@ RUN pyenv install 3.9.19 && \
     pyenv rehash && \
     pyenv global 3.9.19 3.10.14 3.7.17
 
+
+ENV POETRY_VERSION=1.8.5
+
+# Install Poetry
+RUN curl -sSL "https://install.python-poetry.org" -o get-poetry.py && \
+    python3 get-poetry.py --version $POETRY_VERSION && \
+    rm get-poetry.py
+
+COPY ./gitchameleon /app/gitchameleon  
+
+# Copy pyproject.toml and poetry.lock (if available)
+COPY ./pyproject.toml ./poetry.lock /app/
+
 # Set the working directory
 WORKDIR /app
+
+
+# Install Python dependencies using Poetry
+RUN poetry install --no-root
 
 # Use bash as the entrypoint.
 ENTRYPOINT ["/bin/bash"]
