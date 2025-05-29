@@ -14,7 +14,7 @@ from tqdm import tqdm
 from gitchameleon.eval_sample import eval_sample
 
 
-def run_script(env_path: str, py_file: str="temp.py") -> dict:
+def run_script(env_path: str, py_file: str = "temp.py") -> dict:
     python_executable = os.path.join(env_path, "bin", "python")
     if py_file is None:
         raise RuntimeError(f"Python is missing from the environment at {env_path}")
@@ -22,7 +22,7 @@ def run_script(env_path: str, py_file: str="temp.py") -> dict:
     try:
         with open(py_file, "r") as file:
             file.read()
-    except Exception as e:        
+    except Exception as e:
         raise RuntimeError("Error at py_file open:", e)
 
     error_log = ""
@@ -62,8 +62,8 @@ def extract_code(text: str) -> str:
     """Parse raw string into python code"""
     try:
         match = re.search(r"```python(.*?)```", text, re.DOTALL)
-    except Exception:        
-        match = re.search(r"```(.*?)```", rf"{text}", re.DOTALL)  # anthropic        
+    except Exception:
+        match = re.search(r"```(.*?)```", rf"{text}", re.DOTALL)  # anthropic
     return match.group(1) if match else text
 
 
@@ -97,7 +97,7 @@ def process_record(idx, record, manual_tests, env_dir, test_dir):
     solution = get_solution(record)
     env_path = os.path.join(env_dir, f"gcham_venv_{example_id}")
     manual_test = manual_tests[example_id]
-    try:        
+    try:
         test_file_path = os.path.join(test_dir, f"test_sample_{example_id}.py")
         with open(test_file_path, "r") as tf:
             test_file_content = tf.read()

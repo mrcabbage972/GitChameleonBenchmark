@@ -21,7 +21,7 @@ This is an evaluation harness for the GitChameleon dataset.
 Run `make evals-setup`.
 
 ### Running Evaluation
-TBD
+Run `make run-eval SOLUTION_PATH=[the absolute path to the solution file]`. The statistics will be printed out and the detailed logs will be written to an output file next to the solution file.
 
 ## 🐞 Reporting Issues
 
