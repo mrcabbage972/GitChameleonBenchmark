@@ -13,15 +13,24 @@ This is an evaluation harness for the GitChameleon dataset.
 [![CI](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml)
 
 ## Usage
-### Prerequisites
+### 📦 Prerequisites
+Before you begin, ensure you have the following installed:
 1. [Python 3.9+](https://www.python.org/downloads/)
 1. [Poetry](https://python-poetry.org/docs/)
 
-### Harness Setup
-Run `make evals-setup`.
+### 🏗️ Harness Setup
+To set up the evaluation environment, run:
+```
+make evals-setup
+```
 
-### Running Evaluation
-Run `make run-eval SOLUTION_PATH=[the absolute path to the solution file]`. The statistics will be printed out and the detailed logs will be written to an output file next to the solution file.
+### ▶️ Running Evaluation
+To evaluate your solution, execute the following command:
+```
+make run-eval SOLUTION_PATH=[the absolute path to the solution file]
+```
+
+The success rates will be printed out and detailed logs will be written to an output file next to the solution file.
 
 ## 🐞 Reporting Issues
 
@@ -39,5 +48,5 @@ Before opening a new issue, please search the existing issues to see if someone 
 That extra detail helps us diagnose and fix things much faster.
 
 
-## Citation
+## 📚 Citation
 TBD
