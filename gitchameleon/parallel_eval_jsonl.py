@@ -8,9 +8,9 @@ import pandas as pd
 import subprocess
 import tempfile
 import py_compile
-import wandb
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.eval_sample import eval_sample
+
 
 def run_script(env_path, py_file="temp.py"):
     python_executable = os.path.join(env_path, "bin", "python")
@@ -57,11 +57,12 @@ def run_script(env_path, py_file="temp.py"):
     }
     return result  # 1 = pass, 0 = fail
 
+
 def extract_code(text: str) -> str:
     """Parse raw string into python code"""
     try:
         match = re.search(r"```python(.*?)```", text, re.DOTALL)
-    except Exception as e:
+    except Exception:
         try:
             match = re.search(r"```(.*?)```", rf"{text}", re.DOTALL)  # anthropic
         except Exception as e:
@@ -111,9 +112,7 @@ def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir)
             "test_file": test_file_content,
             "codes": {"solution_code": {"code": solution}},
         }
-        eval_res = eval_sample(example_id, env_path, code_dict)["codes"][
-            "solution_code"
-        ]
+        eval_res = eval_sample(example_id, env_path, code_dict)["codes"]["solution_code"]
         res = {
             "idx": idx,
             "example_id": example_id,
@@ -134,7 +133,7 @@ def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir)
         }
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_code = solution + '\n' + manual_test
+            test_code = solution + "\n" + manual_test
             test_file = os.path.join(temp_dir, f"manual_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
                 f.write(test_code)
@@ -149,22 +148,20 @@ def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir)
 
     except Exception as e:
         print(f"Error processing record (visible) {idx}: {e}")
-        res.update({
-            "output_manual": f"Error: {e}",
-            "passed_manual": False,
-            "compiled_manual": False,
-        })
+        res.update(
+            {
+                "output_manual": f"Error: {e}",
+                "passed_manual": False,
+                "compiled_manual": False,
+            }
+        )
     return res
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Process a JSONL file in parallel with eval_sample and save results."
-    )
+    parser = argparse.ArgumentParser(description="Process a JSONL file in parallel with eval_sample and save results.")
     parser.add_argument("data_file", help="Path to the dataset JSONL file to process")
-    parser.add_argument(
-        "jsonl_file", help="Path to the model outputs JSONL file to process"
-    )
+    parser.add_argument("jsonl_file", help="Path to the model outputs JSONL file to process")
     parser.add_argument("env_dir", help="Path to the dir where environments live")
     parser.add_argument("test_dir", help="Path to the dir where test files are stored")
     parser.add_argument(
@@ -211,7 +208,15 @@ def main():
     # Kick off parallel tasks
     with ThreadPoolExecutor(max_workers=args.workers) as exe:
         futures = [
-            exe.submit(process_record, idx, rec, starting_codes, manual_tests, args.env_dir, args.test_dir)
+            exe.submit(
+                process_record,
+                idx,
+                rec,
+                starting_codes,
+                manual_tests,
+                args.env_dir,
+                args.test_dir,
+            )
             for idx, rec in enumerate(outputs)
         ]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Evaluating"):
@@ -242,24 +247,26 @@ def main():
     # fraction passed
     passed = df["passed"].sum()
     total = len(df)
-    print(f"[✓] {passed}/{total} tests passed (hidden) ({passed/total:.2%})")
+    print(f"[✓] {passed}/{total} tests passed (hidden) ({passed / total:.2%})")
     compiled = df["compiled"].sum()
-    print(f"[✓] {compiled}/{total} tests compiled (hidden) ({compiled/total:.2%})")
+    print(f"[✓] {compiled}/{total} tests compiled (hidden) ({compiled / total:.2%})")
 
     # fraction passed manual
     passed_manual = df["passed_manual"].sum()
     total_manual = len(df)
-    print(f"[✓] {passed_manual}/{total_manual} tests passed (visible) ({passed_manual/total_manual:.2%})")
+    print(f"[✓] {passed_manual}/{total_manual} tests passed (visible) ({passed_manual / total_manual:.2%})")
     compiled_manual = df["compiled_manual"].sum()
-    print(f"[✓] {compiled_manual}/{total_manual} tests compiled (visible) ({compiled_manual/total_manual:.2%})")
+    print(f"[✓] {compiled_manual}/{total_manual} tests compiled (visible) ({compiled_manual / total_manual:.2%})")
 
     if args.wandb:
-        run.log({
-            "pass_at_1_hidden": passed / total,
-            "pass_at_1_visible": passed_manual / total_manual,
-            "compiled_at_1_hidden": compiled / total,
-            "compiled_at_1_visible": compiled_manual / total_manual,
-        })
+        run.log(
+            {
+                "pass_at_1_hidden": passed / total,
+                "pass_at_1_visible": passed_manual / total_manual,
+                "compiled_at_1_hidden": compiled / total,
+                "compiled_at_1_visible": compiled_manual / total_manual,
+            }
+        )
         run.finish()
 
 

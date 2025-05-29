@@ -9,3 +9,17 @@ docker-build:
 
 docker-run:
 	docker run --rm -it -v ".:/app/repo" $(DOCKER_IMAGE):$(DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && exec bash"
+
+lint-all: format ruff-fix sort-imports pyright
+
+format:
+	poetry run ruff format
+
+pyright:
+	poetry run pyright
+
+ruff-fix:
+	poetry run ruff check . --fix
+
+sort-imports:
+	poetry run ruff check --select I --fix

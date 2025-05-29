@@ -3,9 +3,7 @@ import subprocess
 import tempfile
 
 
-def eval_sample(
-    example_id: int, env_path, code_dict: dict, strategy="pytest", coverage=False
-) -> dict:
+def eval_sample(example_id: int, env_path, code_dict: dict, strategy="pytest", coverage=False) -> dict:
     """
     Evaluate sample code using the specified strategy in the provided virtual environment.
 
@@ -142,9 +140,7 @@ def eval_sample(
 
                         with open(cov_file, "r") as f:
                             coverage_data = json.load(f)
-                            sample_result["coverage"] = coverage_data["totals"][
-                                "percent_covered"
-                            ]
+                            sample_result["coverage"] = coverage_data["totals"]["percent_covered"]
                         # os.chdir(current_dir)
 
                     except Exception as e:

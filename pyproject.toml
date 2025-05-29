@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "gitchameleon"
+version = "1.0.0"
+description = ""
+authors = ["Diganta Misra", "Nizar Islah", "Victor May"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.9.9"
+pyright = "^1.1.396"
+
+[tool.ruff]
+line-length = 120
+exclude = ["dataset"]
