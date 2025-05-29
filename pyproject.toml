@@ -7,6 +7,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+pandas = "^2.2.3"
+tqdm = "^4.67.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -15,4 +17,7 @@ pyright = "^1.1.396"
 
 [tool.ruff]
 line-length = 120
+exclude = ["dataset"]
+
+[tool.pyright]
 exclude = ["dataset"]

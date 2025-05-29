@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import os
-import argparse
+import py_compile
 import re
-from tqdm import tqdm
-import pandas as pd
 import subprocess
 import tempfile
-import py_compile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from src.eval_sample import eval_sample
+
+import pandas as pd
+from tqdm import tqdm
+
+from gitchameleon.eval_sample import eval_sample
 
 
 def run_script(env_path, py_file="temp.py"):
@@ -17,10 +19,9 @@ def run_script(env_path, py_file="temp.py"):
     if py_file is None:
         return False, False, "", ""
 
-    parsed_code = ""
     try:
         with open(py_file, "r") as file:
-            parsed_code = file.read()
+            file.read()
     except Exception as e:
         print(py_file, type(py_file))
         print("Error at py_file open:", e)
@@ -99,7 +100,6 @@ def process_record(idx, record, starting_codes, manual_tests, env_dir, test_dir)
     example_id = get_example_id(record)
     try:
         example_id = int(example_id)
-        code = starting_codes[example_id]
         manual_test = manual_tests[example_id]
         solution = get_solution(record)
         env_path = os.path.join(env_dir, f"gcham_venv_{example_id}")
@@ -170,20 +170,8 @@ def main():
         default=os.cpu_count() or 4,
         help="Number of threads to use (default: CPU count)",
     )
-    parser.add_argument(
-        "--wandb",
-        action="store_true",
-        help="Log results to Weights & Biases (wandb)",
-    )
-    args = parser.parse_args()
 
-    if args.wandb:
-        run = wandb.init(
-            project="GC_Evals_EMNLP",
-            entity="cl4code",
-            name=os.path.basename(args.jsonl_file),
-            config={"jsonl_file": args.jsonl_file},
-        )
+    args = parser.parse_args()
 
     # Load JSONL records
     starting_codes = {}
@@ -193,7 +181,6 @@ def main():
             line = line.strip()
             if line:
                 data = json.loads(line)
-                starting_codes[int(data["example_id"])] = data["starting_code"]
                 manual_tests[int(data["example_id"])] = data["test"]
 
     # Load JSONL records
@@ -232,18 +219,6 @@ def main():
     df.to_csv(output_csv, index=False)
     print(f"[✓] Saved results to {output_csv}")
 
-    # log to wandb
-    if args.wandb:
-        run.log({"eval_results": wandb.Table(dataframe=df)})
-        # log as an artifact
-        artifact = wandb.Artifact(
-            name=os.path.basename(output_csv),
-            type="evaluation",
-            description="Evaluation results of the model outputs",
-        )
-        artifact.add_file(output_csv)
-        run.log_artifact(artifact)
-
     # fraction passed
     passed = df["passed"].sum()
     total = len(df)
@@ -257,17 +232,6 @@ def main():
     print(f"[✓] {passed_manual}/{total_manual} tests passed (visible) ({passed_manual / total_manual:.2%})")
     compiled_manual = df["compiled_manual"].sum()
     print(f"[✓] {compiled_manual}/{total_manual} tests compiled (visible) ({compiled_manual / total_manual:.2%})")
-
-    if args.wandb:
-        run.log(
-            {
-                "pass_at_1_hidden": passed / total,
-                "pass_at_1_visible": passed_manual / total_manual,
-                "compiled_at_1_hidden": compiled / total,
-                "compiled_at_1_visible": compiled_manual / total_manual,
-            }
-        )
-        run.finish()
 
 
 if __name__ == "__main__":
