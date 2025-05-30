@@ -11,9 +11,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 from tqdm import tqdm
 
-from gitchameleon.data_model import Solution
+from gitchameleon.data_model import Example, Solution
 from gitchameleon.eval_sample import eval_sample
-from gitchameleon.utils import generate_venv_cache_key, load_jsonl
+from gitchameleon.utils import generate_venv_cache_key
 
 
 def run_script(env_path: str, py_file: str = "temp.py") -> dict:
@@ -69,7 +69,7 @@ def extract_code(text: str) -> str:
     return match.group(1) if match else text
 
 
-def process_record(idx, s: dict, record: Solution, manual_tests, env_dir: str, test_dir: str):
+def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str, test_dir: str):
     """
     Process one JSON record: run eval_sample() and return a dict
     with example_id, code_id, output, passed, compiled, and idx.
@@ -77,9 +77,7 @@ def process_record(idx, s: dict, record: Solution, manual_tests, env_dir: str, t
     example_id = record.example_id
     example_id = int(example_id)
     solution = record.answer
-    env_key = generate_venv_cache_key(
-        s["python_version"], s["library"], s["version"], s.get("additional_dependencies", "")
-    )
+    env_key = generate_venv_cache_key(s.python_version, s.library, s.version, s.additional_dependencies or "")
     env_name = f"gcham_venv_{env_key}"
     env_path = os.path.join(env_dir, env_name)
     manual_test = manual_tests[example_id]
@@ -149,15 +147,15 @@ def load_manual_tests(dataset_file_path: str) -> dict[int, str]:
     return manual_tests
 
 
-def get_sample_by_id(samples: list[dict], example_id: str) -> dict:
+def get_sample_by_id(samples: list[Example], example_id: str) -> Example:
     for s in samples:
-        if s["example_id"] == example_id:
+        if s.example_id == example_id:
             return s
     raise ValueError(f"Example id {example_id} is missing from the dataset")
 
 
 def verify_solutions(
-    samples: list[dict], manual_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
+    samples: list[Example], manual_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
 ) -> pd.DataFrame:
     filtered_samples = [get_sample_by_id(samples, sol.example_id) for sol in solutions]
     results = []
@@ -219,7 +217,7 @@ def main():
     parser = get_arg_parser()
     args = parser.parse_args()
 
-    samples = load_jsonl(args.dataset_file)
+    samples = Example.from_jsonl(args.dataset_file)
     manual_tests = load_manual_tests(args.dataset_file)
     solutions = Solution.from_jsonl(args.solution_file)
 
