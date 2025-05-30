@@ -17,6 +17,7 @@ This is an evaluation harness for the GitChameleon dataset.
 Before you begin, ensure you have the following installed:
 1. [Python 3.9+](https://www.python.org/downloads/)
 1. [Poetry](https://python-poetry.org/docs/)
+1. [Docker](https://docs.docker.com/get-started/get-docker/)
 
 ### 🏗️ Harness Setup
 1. Clone the repository:
