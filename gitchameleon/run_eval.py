@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from gitchameleon.eval_sample import eval_sample
+from gitchameleon.utils import generate_venv_cache_key, load_jsonl
 
 
 def run_script(env_path: str, py_file: str = "temp.py") -> dict:
@@ -87,7 +88,7 @@ def get_example_id(record):
     return id
 
 
-def process_record(idx, record, manual_tests, env_dir, test_dir):
+def process_record(idx, s, record, manual_tests, env_dir, test_dir):
     """
     Process one JSON record: run eval_sample() and return a dict
     with example_id, code_id, output, passed, compiled, and idx.
@@ -95,7 +96,11 @@ def process_record(idx, record, manual_tests, env_dir, test_dir):
     example_id = get_example_id(record)
     example_id = int(example_id)
     solution = get_solution(record)
-    env_path = os.path.join(env_dir, f"gcham_venv_{example_id}")
+    env_key = generate_venv_cache_key(
+        s["python_version"], s["library"], s["version"], s.get("additional_dependencies", "")
+    )
+    env_name = f"gcham_venv_{env_key}"
+    env_path = os.path.join(env_dir, env_name)
     manual_test = manual_tests[example_id]
     try:
         test_file_path = os.path.join(test_dir, f"test_sample_{example_id}.py")
@@ -173,19 +178,28 @@ def load_solutions(solution_path: str) -> list[str]:
     return outputs
 
 
-def verify_solutions(manual_tests, solutions, env_dir, test_dir, max_workers) -> pd.DataFrame:
+def get_sample_by_id(samples: list[dict], example_id: str) -> dict:
+    for s in samples:
+        if s["example_id"] == example_id:
+            return s
+    raise ValueError(f"Example id {example_id} is missing from the dataset")
+
+
+def verify_solutions(samples, manual_tests, solutions, env_dir: str, test_dir: str, max_workers: int) -> pd.DataFrame:
+    filtered_samples = [get_sample_by_id(samples, sol["example_id"]) for sol in solutions]
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as exe:
         futures = [
             exe.submit(
                 process_record,
                 idx,
+                s,
                 rec,
                 manual_tests,
                 env_dir,
                 test_dir,
             )
-            for idx, rec in enumerate(solutions)
+            for idx, (s, rec) in enumerate(zip(filtered_samples, solutions))
         ]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Evaluating"):
             results.append(fut.result())
@@ -232,10 +246,11 @@ def main():
     parser = get_arg_parser()
     args = parser.parse_args()
 
+    samples = load_jsonl(args.dataset_file)
     manual_tests = load_manual_tests(args.dataset_file)
     solutions = load_solutions(args.solution_file)
 
-    results_df = verify_solutions(manual_tests, solutions, args.env_dir, args.test_dir, args.workers)
+    results_df = verify_solutions(samples, manual_tests, solutions, args.env_dir, args.test_dir, args.workers)
 
     # Save CSV
     output_csv = os.path.splitext(args.solution_file)[0] + "_eval_results.csv"

@@ -8,6 +8,8 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+from gitchameleon.utils import generate_venv_cache_key
+
 # Mapping of Python versions to pyenv-installed versions
 python_versions = {"3.7": "3.7.17", "3.9": "3.9.19", "3.10": "3.10.14"}
 
@@ -214,12 +216,11 @@ def generate_env_id(row):
     return hashlib.sha256(unique_str.encode()).hexdigest()[:8]
 
 
-def process_line(line: str, start_id: int, end_id: int, create_anyway: bool, base_path: str) -> bool:
-    sample = json.loads(line)
-    python_version = sample.get("python_version")
-    example_id = sample.get("example_id")
-    library = sample.get("library")
-    version = sample.get("version")
+def process_line(key: str, sample: dict, start_id: int, end_id: int, create_anyway: bool, base_path: str) -> bool:
+    python_version = sample["python_version"]
+    example_id = sample["example_id"]
+    library = sample["library"]
+    version = sample["version"]
     additional_dependencies = sample.get("additional_dependencies", "")
     if int(example_id) < start_id or int(example_id) > end_id:
         return True
@@ -229,7 +230,7 @@ def process_line(line: str, start_id: int, end_id: int, create_anyway: bool, bas
             print(f"Unsupported Python version {python_version} for example {example_id}.")
             return False
 
-        env_name = f"gcham_venv_{example_id}"
+        env_name = f"gcham_venv_{key}"
         env_path = Path(base_path, env_name)
 
         python_exec = Path(env_path, "bin", "python")
@@ -281,9 +282,28 @@ def main(args):
     with open(jsonl_file, "r") as file:
         lines = file.readlines()
 
+    samples = [json.loads(line) for line in lines]
+    print(f"Found {len(samples)} lines in dataset")
+
+    venv_key_map = {}
+    for sample in samples:
+        venv_key = generate_venv_cache_key(
+            sample.get("python_version"),
+            sample.get("library"),
+            sample.get("version"),
+            sample.get("additional_dependencies", ""),
+        )
+        if venv_key not in venv_key_map:
+            venv_key_map[venv_key] = sample
+
+    print(f"Creating {len(venv_key_map)} environments")
+
     failed_count = 0
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
-        futures = [executor.submit(process_line, line, start_id, end_id, create_anyway, base_path) for line in lines]
+        futures = [
+            executor.submit(process_line, key, sample, start_id, end_id, create_anyway, base_path)
+            for key, sample in venv_key_map.items()
+        ]
         for future in tqdm(as_completed(futures)):
             success = future.result()
             if not success:
