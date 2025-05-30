@@ -69,7 +69,7 @@ def extract_code(text: str) -> str:
     return match.group(1) if match else text
 
 
-def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str, test_dir: str):
+def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: str, test_dir: str):
     """
     Process one JSON record: run eval_sample() and return a dict
     with example_id, code_id, output, passed, compiled, and idx.
@@ -80,7 +80,7 @@ def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str
     env_key = generate_venv_cache_key(s.python_version, s.library, s.version, s.additional_dependencies or "")
     env_name = f"gcham_venv_{env_key}"
     env_path = os.path.join(env_dir, env_name)
-    manual_test = manual_tests[example_id]
+    visible_test = visible_tests[example_id]
     try:
         test_file_path = os.path.join(test_dir, f"test_sample_{example_id}.py")
         with open(test_file_path, "r") as tf:
@@ -111,8 +111,8 @@ def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str
         }
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_code = solution + "\n" + manual_test
-            test_file = os.path.join(temp_dir, f"manual_test_sample_{example_id}.py")
+            test_code = solution + "\n" + visible_test
+            test_file = os.path.join(temp_dir, f"visible_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
                 f.write(test_code)
             eval_res_manual = run_script(env_path, test_file)
@@ -136,15 +136,15 @@ def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str
     return res
 
 
-def load_manual_tests(dataset_file_path: str) -> dict[int, str]:
-    manual_tests = {}
+def load_visible_tests(dataset_file_path: str) -> dict[int, str]:
+    visible_tests = {}
     with open(dataset_file_path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
                 data = json.loads(line)
-                manual_tests[int(data["example_id"])] = data["test"]
-    return manual_tests
+                visible_tests[int(data["example_id"])] = data["test"]
+    return visible_tests
 
 
 def get_sample_by_id(samples: list[Example], example_id: str) -> Example:
@@ -155,7 +155,7 @@ def get_sample_by_id(samples: list[Example], example_id: str) -> Example:
 
 
 def verify_solutions(
-    samples: list[Example], manual_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
+    samples: list[Example], visible_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
 ) -> pd.DataFrame:
     filtered_samples = [get_sample_by_id(samples, sol.example_id) for sol in solutions]
     results = []
@@ -166,7 +166,7 @@ def verify_solutions(
                 idx,
                 s,
                 rec,
-                manual_tests,
+                visible_tests,
                 env_dir,
                 test_dir,
             )
@@ -218,10 +218,12 @@ def main():
     args = parser.parse_args()
 
     samples = Example.from_jsonl(args.dataset_file)
-    manual_tests = load_manual_tests(args.dataset_file)
+    visible_tests = load_visible_tests(args.dataset_file)
     solutions = Solution.from_jsonl(args.solution_file)
 
-    results_df = verify_solutions(samples, manual_tests, solutions, args.env_dir, args.test_dir, args.workers)
+    print(f"Using {args.workers} workers")
+
+    results_df = verify_solutions(samples, visible_tests, solutions, args.env_dir, args.test_dir, args.workers)
 
     # Save CSV
     output_csv = os.path.splitext(args.solution_file)[0] + "_eval_results.csv"
