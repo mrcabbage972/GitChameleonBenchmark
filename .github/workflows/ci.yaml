@@ -96,7 +96,3 @@ jobs:
           context: . # '.' assumes your Dockerfile is in the root of your repo
           push: true
           tags: ${{ steps.docker_tags.outputs.DOCKER_IMAGE_TAGS }}
-          cache-from: type=gha # For faster builds using GitHub Actions cache
-          cache-to: type=gha,mode=max
-        
-

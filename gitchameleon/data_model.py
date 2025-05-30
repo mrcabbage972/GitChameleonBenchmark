@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict, model_validator
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, model_validator
+
 from gitchameleon.utils import load_jsonl
 
 
