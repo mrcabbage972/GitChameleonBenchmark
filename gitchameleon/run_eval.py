@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 from tqdm import tqdm
 
+from gitchameleon.data_model import Solution
 from gitchameleon.eval_sample import eval_sample
 from gitchameleon.utils import generate_venv_cache_key, load_jsonl
 
@@ -68,34 +69,14 @@ def extract_code(text: str) -> str:
     return match.group(1) if match else text
 
 
-def get_solution(record: dict) -> str:
-    solution = record.get("answer", "")
-    if solution == "":
-        solution = record.get("solution", "")
-    if solution == "":
-        solution = record.get("output", "")
-    if solution == "":
-        raise ValueError("No solution found in record")
-    return extract_code(solution)
-
-
-def get_example_id(record):
-    id = record.get("example_id", "")
-    if id == "":
-        id = record.get("sample_idx", "")
-    if id == "":
-        raise ValueError("No example_id found in record")
-    return id
-
-
-def process_record(idx, s, record, manual_tests, env_dir, test_dir):
+def process_record(idx, s: dict, record: Solution, manual_tests, env_dir: str, test_dir: str):
     """
     Process one JSON record: run eval_sample() and return a dict
     with example_id, code_id, output, passed, compiled, and idx.
     """
-    example_id = get_example_id(record)
+    example_id = record.example_id
     example_id = int(example_id)
-    solution = get_solution(record)
+    solution = record.answer
     env_key = generate_venv_cache_key(
         s["python_version"], s["library"], s["version"], s.get("additional_dependencies", "")
     )
@@ -168,16 +149,6 @@ def load_manual_tests(dataset_file_path: str) -> dict[int, str]:
     return manual_tests
 
 
-def load_solutions(solution_path: str) -> list[str]:
-    outputs = []
-    with open(solution_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                outputs.append(json.loads(line))
-    return outputs
-
-
 def get_sample_by_id(samples: list[dict], example_id: str) -> dict:
     for s in samples:
         if s["example_id"] == example_id:
@@ -185,8 +156,10 @@ def get_sample_by_id(samples: list[dict], example_id: str) -> dict:
     raise ValueError(f"Example id {example_id} is missing from the dataset")
 
 
-def verify_solutions(samples, manual_tests, solutions, env_dir: str, test_dir: str, max_workers: int) -> pd.DataFrame:
-    filtered_samples = [get_sample_by_id(samples, sol["example_id"]) for sol in solutions]
+def verify_solutions(
+    samples: list[dict], manual_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
+) -> pd.DataFrame:
+    filtered_samples = [get_sample_by_id(samples, sol.example_id) for sol in solutions]
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as exe:
         futures = [
@@ -248,7 +221,7 @@ def main():
 
     samples = load_jsonl(args.dataset_file)
     manual_tests = load_manual_tests(args.dataset_file)
-    solutions = load_solutions(args.solution_file)
+    solutions = Solution.from_jsonl(args.solution_file)
 
     results_df = verify_solutions(samples, manual_tests, solutions, args.env_dir, args.test_dir, args.workers)
 
