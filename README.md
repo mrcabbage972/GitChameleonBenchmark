@@ -8,7 +8,7 @@
 # GitChameleon
 
 
-This is an evaluation harness for the GitChameleon dataset.
+This is an evaluation harness for **GitChameleon**, an AI coding benchmark that comprises 328 Python-based problems tha are conditioned on specific versions of popular libraries for scientific computing and web development.
 
 [![CI](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml)
 
