@@ -100,7 +100,7 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
             "compiled": eval_res.get("compile", True),
         }
     except Exception as e:
-        print(f"Error processing record (hidden) {idx}: {e}")
+        print(f"Error processing example id (hidden) {example_id}: {e}")
         res = {
             "idx": idx,
             "example_id": example_id,
@@ -125,7 +125,7 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
         )
 
     except Exception as e:
-        print(f"Error processing record (visible) {idx}: {e}")
+        print(f"Error processing example id (visible) {example_id}: {e}")
         res.update(
             {
                 "output_manual": f"Error: {e}",

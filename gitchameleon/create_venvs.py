@@ -221,7 +221,7 @@ def process_line(key: str, sample: dict, start_id: int, end_id: int, create_anyw
     example_id = sample["example_id"]
     library = sample["library"]
     version = sample["version"]
-    additional_dependencies = sample.get("additional_dependencies", "")
+    additional_dependencies = sample.get("additional_dependencies", "") + " " + sample.get("extra_dependencies", "")
     if int(example_id) < start_id or int(example_id) > end_id:
         return True
     if python_version and example_id:
@@ -296,7 +296,7 @@ def main(args):
         if venv_key not in venv_key_map:
             venv_key_map[venv_key] = sample
 
-    print(f"Creating {len(venv_key_map)} environments")
+    print(f"Creating {len(venv_key_map)} environments, using {args.concurrency} workers")
 
     failed_count = 0
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
@@ -351,7 +351,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--concurrency",
         type=int,
-        default=4,
+        default=os.cpu_count(),
         help="The concurrency with which to create the environments.",
     )
 
