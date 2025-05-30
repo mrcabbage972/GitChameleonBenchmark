@@ -76,7 +76,7 @@ def process_record(idx, s: Example, record: Solution, manual_tests, env_dir: str
     """
     example_id = record.example_id
     example_id = int(example_id)
-    solution = record.answer
+    solution = extract_code(record.answer)
     env_key = generate_venv_cache_key(s.python_version, s.library, s.version, s.additional_dependencies or "")
     env_name = f"gcham_venv_{env_key}"
     env_path = os.path.join(env_dir, env_name)
