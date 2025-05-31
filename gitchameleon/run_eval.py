@@ -156,7 +156,12 @@ def get_sample_by_id(samples: list[Example], example_id: str) -> Example:
 
 
 def verify_solutions(
-    samples: list[Example], visible_tests, solutions: list[Solution], env_dir: str, test_dir: str, max_workers: int
+    samples: list[Example],
+    visible_tests: dict[int, str],
+    solutions: list[Solution],
+    env_dir: str,
+    test_dir: str,
+    max_workers: int,
 ) -> pd.DataFrame:
     filtered_samples = [get_sample_by_id(samples, sol.example_id) for sol in solutions]
     results = []
