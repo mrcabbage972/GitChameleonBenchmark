@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 from tqdm import tqdm
 
+from gitchameleon.constants import TIMEOUT_SEC
 from gitchameleon.data_model import Example, Solution
 from gitchameleon.eval_sample import eval_sample
 from gitchameleon.utils import generate_venv_cache_key
@@ -39,7 +40,7 @@ def run_script(env_path: str, py_file: str = "temp.py") -> dict:
         # Run the Python script within the virtual environment
         command = [python_executable, py_file]
         try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+            result = subprocess.run(command, capture_output=True, text=True, timeout=TIMEOUT_SEC)
             exit_code = result.returncode
             error_log = result.stderr
         except subprocess.TimeoutExpired as e:

@@ -1,6 +1,9 @@
+import json
 import os
 import subprocess
 import tempfile
+
+from gitchameleon.constants import TIMEOUT_SEC
 
 
 def eval_sample(example_id: int, env_path, code_dict: dict, strategy="pytest", coverage=False) -> dict:
@@ -97,7 +100,7 @@ def eval_sample(example_id: int, env_path, code_dict: dict, strategy="pytest", c
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         text=True,
-                        timeout=120,
+                        timeout=TIMEOUT_SEC,
                     )
                     sample_result["output"] = proc.stdout + proc.stderr
                     # A return code of 0 indicates that the tests passed.
@@ -131,21 +134,14 @@ def eval_sample(example_id: int, env_path, code_dict: dict, strategy="pytest", c
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             text=True,
-                            timeout=120,
+                            timeout=TIMEOUT_SEC,
                         )
-                        # print(proc.stdout)
-                        # print(proc.stderr)
-
-                        import json
 
                         with open(cov_file, "r") as f:
                             coverage_data = json.load(f)
                             sample_result["coverage"] = coverage_data["totals"]["percent_covered"]
-                        # os.chdir(current_dir)
-
                     except Exception as e:
                         print(f"Error while getting coverage: {e}")
-                        # os.chdir(current_dir)
                         pass
 
         else:
@@ -154,27 +150,3 @@ def eval_sample(example_id: int, env_path, code_dict: dict, strategy="pytest", c
 
         results["codes"][code_id] = sample_result
     return results
-
-
-if __name__ == "__main__":
-    # Example usage
-    env_path = "eval_venvs_debug/gcham_venv_0"
-    strategy = "pytest"
-    test_file_path = "samples/test_early_sample_0/test_early_log_ndtr.py"
-    example_id_0_greedy_path = "samples/sample_0.py"
-
-    code_dict = {}
-    # Read the test file content
-    with open(test_file_path, "r") as test_file:
-        test_file_content = test_file.read()
-    # Update the code_dict with the test file content
-    code_dict["test_file"] = test_file_content
-    # Read the sample code content and update the code_dict
-    with open(example_id_0_greedy_path, "r") as sample_file:
-        sample_code_content = sample_file.read()
-    code_dict["codes"] = {"example_id_0_greedy": {"code": sample_code_content}}
-
-    results = eval_sample(0, env_path, code_dict, strategy)
-    import pprint
-
-    pprint.pprint(results)
