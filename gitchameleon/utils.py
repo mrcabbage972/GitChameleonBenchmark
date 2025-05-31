@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 
 
 def generate_venv_cache_key(python_version: str, library: str, version: str, extra_deps: str) -> str:
@@ -18,3 +19,8 @@ def load_jsonl(file_path: str) -> list[dict]:
                 data = json.loads(line)
                 result.append(data)
     return result
+
+
+def default_num_workers() -> int:
+    cpu_count = os.cpu_count() or 1
+    return max(1, int(0.75 * cpu_count))

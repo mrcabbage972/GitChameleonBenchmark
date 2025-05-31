@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from gitchameleon.utils import default_num_workers
+
 
 def main():
     """
@@ -30,6 +32,12 @@ def main():
         type=Path,
         default=Path("./.dataset_venvs"),
         help="Path to the .dataset_venvs directory on the host.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=default_num_workers(),
+        help="Number of threads to use (default: CPU count)",
     )
     args = parser.parse_args()
 
@@ -64,7 +72,7 @@ def main():
         # Set the image and tag
         f"{args.docker_image}:{args.docker_tag}",
         # The command to execute inside the container
-        f'-c "pyenv global {args.python_version} && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests"',
+        f'-c "pyenv global {args.python_version} && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests --workers {args.workers}"',
     ]
 
     try:

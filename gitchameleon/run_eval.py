@@ -14,7 +14,7 @@ from tqdm import tqdm
 from gitchameleon.constants import TIMEOUT_SEC
 from gitchameleon.data_model import Example, Solution
 from gitchameleon.eval_sample import eval_sample
-from gitchameleon.utils import generate_venv_cache_key
+from gitchameleon.utils import default_num_workers, generate_venv_cache_key
 
 
 def run_script(env_path: str, py_file: str = "temp.py") -> dict:
@@ -208,7 +208,7 @@ def get_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--workers",
         type=int,
-        default=os.cpu_count() or 4,
+        default=default_num_workers(),
         help="Number of threads to use (default: CPU count)",
     )
     return parser
