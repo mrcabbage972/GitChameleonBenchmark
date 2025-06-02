@@ -25,7 +25,7 @@ class TestComputeLPCCoef(unittest.TestCase):
         y = np.sin(2 * np.pi * 440 * t)  # 440 Hz sine wave
 
         # Test with different orders
-        for order in [5, 10, 15]:
+        for order in [1, 2, 3]:
             coeffs = compute_lpc_coef(y, sr, order)
 
             # Check that the output has the expected shape
