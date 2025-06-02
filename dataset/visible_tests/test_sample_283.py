@@ -19,7 +19,7 @@ y, sr = librosa.load(filename)
 n_fft = 4096
 hop_length = n_fft // 2
 
-stream, stream_blocks = compute_stream(y, sr, n_fft, hop_length)
+stream, stream_blocks = compute_stream(filename, y, sr, n_fft, hop_length)
 sol_stream = sf.blocks(
     filename,
     blocksize=n_fft + 15 * hop_length,
