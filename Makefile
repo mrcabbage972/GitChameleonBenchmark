@@ -37,7 +37,7 @@ docker-run:
 evals-setup: conditional-docker-build build-venvs
 
 build-venvs:
-	docker run --rm -it -v "./.dataset_venvs:/app/.dataset_venvs" $(FINAL_DOCKER_IMAGE):$(FINAL_DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && poetry run python gitchameleon/create_venvs.py --base_path .dataset_venvs --dataset dataset.jsonl"
+	docker run --rm -it -v "./.dataset_venvs:/app/.dataset_venvs" $(FINAL_DOCKER_IMAGE):$(FINAL_DOCKER_TAG) -c "pyenv global $(PYTHON_VERSION) && poetry run python gitchameleon/create_venvs.py --start 0 --end 1000 --base_path .dataset_venvs --dataset dataset.jsonl"
 
 lint-all: format ruff-fix sort-imports pyright
 
@@ -58,6 +58,6 @@ run-eval:
 	  echo "Usage: make run-eval SOLUTION_PATH=<an absolute path to the solution file>"; exit 1; \
 	else \
 	  echo "Using Docker image: $(FINAL_DOCKER_IMAGE):$(FINAL_DOCKER_TAG)"; \
-	  python gitchameleon/eval_wrapper.py --solution-path $(SOLUTION_PATH) --docker-image $(FINAL_DOCKER_IMAGE) --docker-tag $(FINAL_DOCKER_TAG) --python-version $(PYTHON_VERSION); \
+	  python gitchameleon/eval_wrapper.py --solution-path $(SOLUTION_PATH) --docker-image $(FINAL_DOCKER_IMAGE) --docker-tag $(FINAL_DOCKER_TAG) \
 	fi
 	

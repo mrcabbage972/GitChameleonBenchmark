@@ -60,6 +60,8 @@ WORKDIR /app
 # Install Python dependencies using Poetry
 RUN poetry install --no-root
 
+RUN poetry add nltk==3.6.3 && poetry run python -c "import nltk; nltk.download('punkt'); nltk.download('wordnet'); nltk.download('omw-1.4')" && poetry remove nltk
+
 COPY ./gitchameleon /app/gitchameleon  
 COPY ./dataset/dataset.jsonl /app/dataset.jsonl
 COPY ./dataset/hidden_tests /app/hidden_tests

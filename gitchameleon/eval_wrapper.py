@@ -15,30 +15,19 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--solution-path", type=Path, required=True, help="Absolute path to the solution file on the host machine."
-    )
-    parser.add_argument(
-        "--docker-image", type=str, required=True, help="Name of the Docker image to use (e.g., 'my-image')."
-    )
-    parser.add_argument("--docker-tag", type=str, default="latest", help="Tag of the Docker image to use.")
-    parser.add_argument(
-        "--python-version",
-        type=str,
-        required=True,
-        help="Python version to set with pyenv inside the container (e.g., '3.9.18').",
-    )
-    parser.add_argument(
-        "--dataset-venvs-dir",
-        type=Path,
-        default=Path("./.dataset_venvs"),
-        help="Path to the .dataset_venvs directory on the host.",
+        "--solution-path", type=Path, required=True, help="Absolute path to the solution file on the host machine"
     )
     parser.add_argument(
         "--workers",
         type=int,
         default=default_num_workers(),
-        help="Number of threads to use (default: CPU count)",
+        help="Number of threads to use",
     )
+    parser.add_argument(
+        "--docker-image", type=str, default="mrcabbage972/gitchameleon", help="Name of the Docker image to use"
+    )
+    parser.add_argument("--docker-tag", type=str, default="latest", help="Tag of the Docker image to use")
+
     args = parser.parse_args()
 
     solution_path_host = args.solution_path.resolve()
@@ -49,7 +38,8 @@ def main():
     output_csv_host_path = solution_path_host.parent / f"{solution_path_host.stem}_eval_results.csv"
     output_csv_host_path.touch(exist_ok=True)
 
-    dataset_venvs_host_dir = args.dataset_venvs_dir.resolve()
+    dataset_venvs_dir = Path("./.dataset_venvs")
+    dataset_venvs_host_dir = dataset_venvs_dir.resolve()
     if not dataset_venvs_host_dir.is_dir():
         print(f"Warning: Dataset venvs directory not found at '{dataset_venvs_host_dir}'.")
 
@@ -72,7 +62,7 @@ def main():
         # Set the image and tag
         f"{args.docker_image}:{args.docker_tag}",
         # The command to execute inside the container
-        f'-c "pyenv global {args.python_version} && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests --workers {args.workers}"',
+        f'-c "pyenv global 3.9 && poetry run python gitchameleon/run_eval.py --dataset_file dataset.jsonl --solution_file solution.jsonl --env_dir .dataset_venvs --test_dir hidden_tests --workers {args.workers}"',
     ]
 
     try:
