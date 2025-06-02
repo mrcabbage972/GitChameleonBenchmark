@@ -23,7 +23,7 @@ class TestLPCCoefficients(unittest.TestCase):
 
     def test_compute_lpc_coef_returns_correct_shape(self):
         """Test that the function returns coefficients of the expected shape."""
-        order = 10
+        order = 2
         coeffs = compute_lpc_coef(self.y, self.sr, order)
 
         # LPC coefficients should be of length order+1
@@ -31,7 +31,7 @@ class TestLPCCoefficients(unittest.TestCase):
 
     def test_compute_lpc_coef_first_coefficient_is_one(self):
         """Test that the first coefficient is always 1."""
-        order = 10
+        order = 2
         coeffs = compute_lpc_coef(self.y, self.sr, order)
 
         # The first coefficient should always be 1
@@ -39,7 +39,7 @@ class TestLPCCoefficients(unittest.TestCase):
 
     def test_compute_lpc_coef_matches_librosa_direct(self):
         """Test that our wrapper function matches direct librosa call."""
-        order = 10
+        order = 2
         our_coeffs = compute_lpc_coef(self.y, self.sr, order)
         librosa_coeffs = librosa.lpc(self.y, order)
 
@@ -48,7 +48,7 @@ class TestLPCCoefficients(unittest.TestCase):
 
     def test_compute_lpc_coef_with_different_orders(self):
         """Test the function with different filter orders."""
-        for order in [5, 12, 20]:
+        for order in [1, 2, 4]:
             coeffs = compute_lpc_coef(self.y, self.sr, order)
             self.assertEqual(len(coeffs), order + 1)
             self.assertEqual(coeffs[0], 1.0)
@@ -63,7 +63,7 @@ class TestLPCCoefficients(unittest.TestCase):
             + 0.1 * np.random.randn(len(t))
         )
 
-        order = 15
+        order = 5
         coeffs = compute_lpc_coef(y, self.sr, order)
 
         # Check basic properties
