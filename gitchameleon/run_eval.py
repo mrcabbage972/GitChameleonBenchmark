@@ -113,10 +113,10 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
         }
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_code = solution + "\n" + visible_test
+            test_code =  "from instrument import activate_instrumentation\n" + solution + "# STOP INSTRUMENTATION\nactivate_instrumentation()\n\n" + visible_test
             test_file = os.path.join(temp_dir, f"visible_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
-                test_code = "from instrument import activate_instrumentation\n# STOP INSTRUMENTATION\n" + test_code + "\nactivate_instrumentation()"
+                #test_code = "from instrument import activate_instrumentation\n# STOP INSTRUMENTATION\nactivate_instrumentation()\n" + test_code
                 print(test_code)
                 f.write(test_code)
             import shutil
