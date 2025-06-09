@@ -20,7 +20,7 @@ def main():
     parser.add_argument(
         "--workers",
         type=int,
-        default=default_num_workers(),
+        default=1,
         help="Number of threads to use",
     )
     parser.add_argument(

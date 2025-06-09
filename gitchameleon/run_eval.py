@@ -115,9 +115,8 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
             test_code = solution + "\n" + visible_test
             test_file = os.path.join(temp_dir, f"visible_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
-                anchor = 'sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))'
-                replacement = anchor + "\n" + "import instrument"
-                test_code = test_code.replace(anchor, replacement)
+                test_code = "from scope_instrumenter import activate_instrumentation\n" + test_code + "\nactivate_instrumentation()"
+                print(test_code)
                 f.write(test_code)
             import shutil
             shutil.copy("gitchameleon/instrument.py", temp_dir)
