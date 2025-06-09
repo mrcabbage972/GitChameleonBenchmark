@@ -43,6 +43,7 @@ def run_script(env_path: str, py_file: str = "temp.py") -> dict:
             result = subprocess.run(command, capture_output=True, text=True, timeout=TIMEOUT_SEC)
             exit_code = result.returncode
             error_log = result.stderr
+            print(result.stdout)
         except subprocess.TimeoutExpired as e:
             print(e)
             exit_code = 1
@@ -115,12 +116,12 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
             test_code = solution + "\n" + visible_test
             test_file = os.path.join(temp_dir, f"visible_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
-                test_code = "from scope_instrumenter import activate_instrumentation\n" + test_code + "\nactivate_instrumentation()"
+                test_code = "from instrument import activate_instrumentation\n# STOP INSTRUMENTATION\n" + test_code + "\nactivate_instrumentation()"
                 print(test_code)
                 f.write(test_code)
             import shutil
             shutil.copy("gitchameleon/instrument.py", temp_dir)
-            eval_res_manual = run_script(env_path, os.path.join(temp_dir, "instrument.py"))
+            eval_res_manual = run_script(env_path, os.path.join(temp_dir, test_file))
         res.update(
             {
                 "output_manual": eval_res_manual.get("output_manual", "").strip(),
