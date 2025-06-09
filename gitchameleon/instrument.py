@@ -5,14 +5,14 @@ import sys
 
 # --- Configuration ---
 # Directory to save the persisted data
-OUTPUT_DIR = "persisted_data"
+OUTPUT_DIR = "/app/persisted_data"
 STOP_COMMENT = "# STOP INSTRUMENTATION"
 
 # --- Create output directory if it doesn't exist ---
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def _instrument_and_persist(func):
+def _instrument_and_persist(func, outname):
     """
     Internal decorator to wrap a function, persisting its inputs and output.
     This is the logic that will be applied to the target functions.
@@ -29,7 +29,8 @@ def _instrument_and_persist(func):
         except AttributeError:
             module_name = "unknown_module"
 
-        output_filename = os.path.join(OUTPUT_DIR, f"{module_name}.{func_name_for_wrapper}.pkl")
+        print(f"name: {outname}")
+        output_filename = os.path.join(OUTPUT_DIR, f"{outname}.{func_name_for_wrapper}.pkl")
 
         # Persist the inputs and output
         try:
@@ -51,7 +52,7 @@ def _instrument_and_persist(func):
     return wrapper
 
 
-def activate_instrumentation():
+def activate_instrumentation(outname):
     """
     Activates instrumentation for all functions defined in the caller's file
     up to a line containing the STOP_COMMENT.
@@ -103,7 +104,7 @@ def activate_instrumentation():
             
             # --- Step 3: Apply the decorator if the function is defined before the stop comment ---
             if func_start_line < stop_line_number:
-                caller_globals[name] = _instrument_and_persist(obj)
+                caller_globals[name] = _instrument_and_persist(obj, outname)
                 # --- ADDED: Print statement for what was instrumented ---
                 print(f"    - Wrapping function: '{name}' (defined on line {func_start_line})")
                 instrumented_count += 1

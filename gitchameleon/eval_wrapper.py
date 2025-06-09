@@ -59,7 +59,7 @@ def main():
         "-v",
         f"{output_csv_host_path}:/app/solution_eval_results.csv",
          "-v",
-        f"persisted_data:/app/persisted_data",
+        f"/home/user/GitChameleonBenchmark/persisted_data:/app/persisted_data",
         # Set the image and tag
         f"{args.docker_image}:{args.docker_tag}",
         # The command to execute inside the container
