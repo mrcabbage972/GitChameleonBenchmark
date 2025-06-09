@@ -115,8 +115,13 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
             test_code = solution + "\n" + visible_test
             test_file = os.path.join(temp_dir, f"visible_test_sample_{example_id}.py")
             with open(test_file, "w") as f:
+                anchor = 'sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))'
+                replacement = anchor + "\n" + "import instrument"
+                test_code = test_code.replace()
                 f.write(test_code)
-            eval_res_manual = run_script(env_path, test_file)
+            import shutil
+            shutil.copy("gitchameleon/instrument.py", "")
+            eval_res_manual = run_script(env_path, os.path.join(temp_dir, "instrument.py"))
         res.update(
             {
                 "output_manual": eval_res_manual.get("output_manual", "").strip(),
