@@ -120,7 +120,7 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
                 test_code = test_code.replace(anchor, replacement)
                 f.write(test_code)
             import shutil
-            shutil.copy("gitchameleon/instrument.py", "")
+            shutil.copy("gitchameleon/instrument.py", temp_dir)
             eval_res_manual = run_script(env_path, os.path.join(temp_dir, "instrument.py"))
         res.update(
             {
@@ -131,6 +131,8 @@ def process_record(idx, s: Example, record: Solution, visible_tests, env_dir: st
         )
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Error processing example id (visible) {example_id}: {e}")
         res.update(
             {
