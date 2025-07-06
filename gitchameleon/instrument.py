@@ -1,7 +1,9 @@
 import inspect
 import os
-import json  # Changed from pickle
+import json
 import sys
+import base64 # Added for PIL.Image
+import io       # Added for PIL.Image
 
 # --- Configuration ---
 # Directory to save the persisted data
@@ -20,6 +22,11 @@ def _to_json_serializable(obj):
     # Check for specific library types only if the library is loaded
     numpy_is_loaded = 'numpy' in sys.modules
     torch_is_loaded = 'torch' in sys.modules
+    networkx_is_loaded = 'networkx' in sys.modules
+    shapely_is_loaded = 'shapely' in sys.modules
+    lightgbm_is_loaded = 'lightgbm' in sys.modules
+    spacy_is_loaded = 'spacy' in sys.modules
+    pil_is_loaded = 'PIL' in sys.modules
 
     if isinstance(obj, (int, float, str, bool, type(None))):
         return obj
@@ -47,6 +54,60 @@ def _to_json_serializable(obj):
             "data": obj.detach().cpu().numpy().tolist()
         }
 
+    # --- NetworkX Conversion ---
+    if networkx_is_loaded and isinstance(obj, sys.modules['networkx'].Graph):
+        from networkx.readwrite import json_graph
+        return {
+            "_type_": "networkx.Graph",
+            "data": json_graph.node_link_data(obj)
+        }
+
+    # --- Shapely Conversion (NEW) ---
+    if shapely_is_loaded and isinstance(obj, sys.modules['shapely'].geometry.base.BaseGeometry):
+        return {
+            "_type_": "shapely.geometry",
+            "data": obj.__geo_interface__
+        }
+
+    # --- LightGBM Dataset Conversion (NEW) ---
+    if lightgbm_is_loaded and isinstance(obj, sys.modules['lightgbm'].Dataset):
+        return {
+            "_type_": "lightgbm.Dataset",
+            "num_data": obj.num_data(),
+            "num_feature": obj.num_feature(),
+            # Recursively serialize the underlying numpy arrays
+            "feature_data": _to_json_serializable(obj.get_data()),
+            "label": _to_json_serializable(obj.get_label()),
+            "weight": _to_json_serializable(obj.get_weight())
+        }
+        
+    # --- spaCy SpanRuler Conversion (NEW) ---
+    if spacy_is_loaded and isinstance(obj, sys.modules['spacy'].pipeline.span_ruler.SpanRuler):
+        return {
+            "_type_": "spacy.pipeline.span_ruler.SpanRuler",
+            "patterns": obj.patterns
+        }
+
+    # --- spaCy English Model Conversion (NEW) ---
+    if spacy_is_loaded and 'spacy.lang.en' in sys.modules and isinstance(obj, sys.modules['spacy'].lang.en.English):
+        return {
+            "_type_": "spacy.lang.en.English",
+            "meta": obj.meta # The meta dictionary contains pipeline info
+        }
+
+    # --- PIL/Pillow Image Conversion (NEW) ---
+    if pil_is_loaded and isinstance(obj, sys.modules['PIL'].Image.Image):
+        buffered = io.BytesIO()
+        obj.save(buffered, format="PNG") # Save as PNG in memory
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return {
+            "_type_": "PIL.Image.Image",
+            "format": "PNG",
+            "mode": obj.mode,
+            "size": obj.size,
+            "data_base64": img_str
+        }
+
     # --- Fallback for any other object ---
     try:
         return json.loads(json.dumps(obj))
@@ -67,18 +128,18 @@ def _instrument_and_persist(func, outname):
         # Execute the original function to get the output
         output = func(*args, **kwargs)
 
-        # --- MODIFIED: Filename now uses .json extension ---
+        # Filename now uses .json extension
         output_filename = os.path.join(OUTPUT_DIR, f"{outname}.{func_name_for_wrapper}.json")
 
         try:
-            # --- MODIFIED: Convert all data to be JSON serializable ---
+            # Convert all data to be JSON serializable
             serializable_payload = {
                 "args": _to_json_serializable(args),
                 "kwargs": _to_json_serializable(kwargs),
                 "output": _to_json_serializable(output)
             }
-
-            # --- MODIFIED: Use json.dump with indentation for readability ---
+            
+            # Use json.dump with indentation for readability
             with open(output_filename, "w") as f:
                 json.dump(serializable_payload, f, indent=4)
 
@@ -99,12 +160,11 @@ def activate_instrumentation(outname):
     up to a line containing the STOP_COMMENT.
     """
     print("\n--- [INSTRUMENTATION STARTED] ---")
-    # --- ADDED: Clarify the output format ---
     print(f"[*] Output Format: JSON")
     print(f"[*] Output Prefix: '{outname}'")
 
 
-    # Get the frame of the code that called this function (the user's script)
+    # Get the frame of the code that called this function
     try:
         caller_frame = inspect.stack()[1]
         caller_filepath = caller_frame.filename
@@ -114,7 +174,6 @@ def activate_instrumentation(outname):
         print("[Instrumentation Error] Could not inspect the caller's stack.", file=sys.stderr)
         return
     finally:
-        # Frames can create reference cycles, so clean it up.
         del caller_frame
 
     # Find the line number of the stop comment
