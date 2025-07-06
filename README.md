@@ -33,7 +33,7 @@ make evals-setup
 ### ▶️ Running Evaluation
 To evaluate your solution, execute the following command:
 ```
-evaluate --solution-path SOLUTION_PATH [--workers WORKERS] 
+poetry run evaluate --solution-path SOLUTION_PATH [--workers WORKERS] 
 ```
 
 The success rates will be printed out and detailed logs will be written to an output file next to the solution file.
