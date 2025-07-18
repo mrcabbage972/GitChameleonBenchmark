@@ -55,4 +55,14 @@ That extra detail helps us diagnose and fix things much faster.
 
 
 ## 📚 Citation
-TBD
+```
+@misc{misra2025gitchameleonevaluatingaicode,
+      title={GitChameleon: Evaluating AI Code Generation Against Python Library Version Incompatibilities}, 
+      author={Diganta Misra and Nizar Islah and Victor May and Brice Rauby and Zihan Wang and Justine Gehring and Antonio Orvieto and Muawiz Chaudhary and Eilif B. Muller and Irina Rish and Samira Ebrahimi Kahou and Massimo Caccia},
+      year={2025},
+      eprint={2507.12367},
+      archivePrefix={arXiv},
+      primaryClass={cs.SE},
+      url={https://arxiv.org/abs/2507.12367}, 
+}
+```
