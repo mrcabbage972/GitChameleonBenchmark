@@ -5,7 +5,7 @@
        style="margin:0 0 1em 0;">
 </p>
 
-# GitChameleon
+# GitChameleon [ACL 2026, Main]
 
 
 This is an evaluation harness for **GitChameleon**, an AI coding benchmark that comprises 328 Python-based problems tha are conditioned on specific versions of popular libraries for scientific computing and web development.
@@ -56,8 +56,8 @@ That extra detail helps us diagnose and fix things much faster.
 
 ## 📚 Citation
 ```
-@misc{misra2025gitchameleonevaluatingaicode,
-      title={GitChameleon: Evaluating AI Code Generation Against Python Library Version Incompatibilities}, 
+@misc{misra2025gitchameleon20evaluatingai,
+      title={GitChameleon 2.0: Evaluating AI Code Generation Against Python Library Version Incompatibilities}, 
       author={Diganta Misra and Nizar Islah and Victor May and Brice Rauby and Zihan Wang and Justine Gehring and Antonio Orvieto and Muawiz Chaudhary and Eilif B. Muller and Irina Rish and Samira Ebrahimi Kahou and Massimo Caccia},
       year={2025},
       eprint={2507.12367},
