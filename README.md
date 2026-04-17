@@ -5,10 +5,10 @@
        style="margin:0 0 1em 0;">
 </p>
 
-# GitChameleon [ACL 2026, Main]
+# GitChameleon 2.0 [ACL 2026, Main]
 
 
-This is an evaluation harness for **GitChameleon**, an AI coding benchmark that comprises 328 Python-based problems tha are conditioned on specific versions of popular libraries for scientific computing and web development.
+This is an evaluation harness for **GitChameleon 2.0**, an AI coding benchmark that comprises 328 Python-based problems tha are conditioned on specific versions of popular libraries for scientific computing and web development.
 
 [![CI](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml)
 ![Python](https://img.shields.io/badge/python-3.9-blue.svg)
