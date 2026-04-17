@@ -10,8 +10,22 @@
 
 This is an evaluation harness for **GitChameleon 2.0**, an AI coding benchmark that comprises 328 Python-based problems tha are conditioned on specific versions of popular libraries for scientific computing and web development.
 
+[![Website](https://img.shields.io/badge/website-gitchameleon--2--0.github.io-blue)](https://gitchameleon-2-0.github.io)
 [![CI](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mrcabbage972/GitChameleonBenchmark/actions/workflows/ci.yaml)
 ![Python](https://img.shields.io/badge/python-3.9-blue.svg)
+[![Dataset on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/dataset-on-hf-sm.svg)](https://huggingface.co/datasets/cabbage972/GitChameleon-2.0)
+
+> **Project website:** [gitchameleon-2-0.github.io](https://gitchameleon-2-0.github.io) — paper, results, dataset, and citation guidance.
+
+## 📂 Dataset
+
+The dataset is hosted on Hugging Face at [cabbage972/GitChameleon-2.0](https://huggingface.co/datasets/cabbage972/GitChameleon-2.0).
+
+```python
+from datasets import load_dataset
+
+ds = load_dataset("cabbage972/GitChameleon-2.0", "problems")
+```
 
 ## 🚀 Usage
 ### 📦 Prerequisites
