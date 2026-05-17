@@ -20,7 +20,7 @@ def main():
     parser.add_argument(
         "--workers",
         type=int,
-        default=default_num_workers(),
+        default=1,
         help="Number of threads to use",
     )
     parser.add_argument(
@@ -48,7 +48,6 @@ def main():
     docker_command = [
         "docker",
         "run",
-        "--rm",
         "-it",
         # Mount the solution file (read-only)
         "-v",
@@ -59,6 +58,8 @@ def main():
         # Mount the target output file
         "-v",
         f"{output_csv_host_path}:/app/solution_eval_results.csv",
+         "-v",
+        f"/home/user/GitChameleonBenchmark/persisted_data:/app/persisted_data",
         # Set the image and tag
         f"{args.docker_image}:{args.docker_tag}",
         # The command to execute inside the container
