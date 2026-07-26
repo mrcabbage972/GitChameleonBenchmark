@@ -25,3 +25,4 @@ exclude = ["dataset", ".dataset_venvs", ".venv"]
 
 [tool.poetry.scripts]
 evaluate = "gitchameleon.eval_wrapper:main"
+build-venvs = "gitchameleon.venv_wrapper:main"
