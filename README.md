@@ -52,6 +52,44 @@ evaluate --solution-path SOLUTION_PATH [--workers WORKERS]
 
 The success rates will be printed out and detailed logs will be written to an output file next to the solution file.
 
+### 🖥️ Running on HPC clusters (Apptainer)
+
+Shared clusters generally do not allow Docker, but provide [Apptainer](https://apptainer.org/)
+(formerly Singularity). The harness supports it as an alternative runtime — `evaluate` picks it
+automatically when no Docker daemon is reachable, or you can select it with `--runtime apptainer`.
+
+```bash
+make apptainer-build                          # convert the published image into containers/gitchameleon.sif
+make apptainer-venvs                          # build the dataset venvs (needs access to PyPI)
+make run-eval-apptainer SOLUTION_PATH=/abs/path/to/solutions.jsonl
+```
+
+The image is read-only under Apptainer, which runs it as the invoking user rather than as root.
+The harness therefore sets `PYENV_VERSION` instead of running `pyenv global` (which would write to
+`$PYENV_ROOT`), and pins `HOME=/root` so poetry finds the venv baked into the image.
+
+#### On a SLURM cluster
+
+The dataset needs 99 virtual environments — roughly a million small files, enough to exhaust the
+*file-count* quota of a typical cluster `home` or `scratch` filesystem. The job templates in
+`scripts/slurm/` therefore build them on the compute node's local disk and keep them on the shared
+filesystem as a single compressed archive, which each evaluation job unpacks back onto local disk:
+
+```bash
+sbatch --account=<alloc> scripts/slurm/build_venvs.sbatch          # ~1 h, writes $SCRATCH/gitchameleon/venvs.tar.zst
+sbatch --account=<alloc> --export=ALL,SOLUTION=/abs/path/sol.jsonl \
+       scripts/slurm/run_eval.sbatch
+```
+
+Building the venvs needs to reach PyPI, and on most clusters compute nodes have no direct outbound
+route; `build_venvs.sbatch` loads the `httpproxy` module where one is available. Evaluation itself
+needs no network. The archive is self-contained, so it can also be copied to another cluster
+instead of being rebuilt there.
+
+> Note on overlays: mounting the venvs from an ext3 or squashfs `--overlay` image would be the
+> tidier option, but Apptainer can only mount those when installed setuid, which shared clusters
+> generally avoid. The archive approach needs no such privileges.
+
 ## 🐞 Reporting Issues
 
 If you run into any bugs or have trouble using **GitChameleon**, please open an issue on GitHub so we can help:
