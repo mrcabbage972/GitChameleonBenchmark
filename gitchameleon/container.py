@@ -41,6 +41,7 @@ PYENV_VERSIONS = {"3.7": "3.7.17", "3.9": "3.9.19", "3.10": "3.10.14"}
 # runs the container later.
 IMAGE_POETRY_CACHE = "/root/.cache/pypoetry"
 IMAGE_NLTK_DATA = "/root/nltk_data"
+IMAGE_POETRY_BIN = "/root/.local/bin"
 APP_DIR = "/app"
 
 
@@ -107,7 +108,10 @@ def wrap_command(runtime: str, command: str, python_version: str = "3.9") -> str
     # working directory so that tests writing to a relative path land somewhere
     # writable; on SLURM, TMPDIR is node-local disk.
     return (
-        f"export PYENV_VERSION={pyenv_version} "
+        # PATH and PYTHONPATH are set explicitly because singularity 3.x --cleanenv drops
+        # the image's own environment, and poetry lives in /root/.local/bin.
+        f"export PATH={IMAGE_POETRY_BIN}:$PATH PYTHONPATH={APP_DIR} "
+        f"PYENV_VERSION={pyenv_version} "
         f"POETRY_CACHE_DIR={IMAGE_POETRY_CACHE} NLTK_DATA={IMAGE_NLTK_DATA}; "
         'HOME="$(mktemp -d "${TMPDIR:-/tmp}/gitchameleon-XXXXXX")"; export HOME; '
         f'cd "$HOME" && {command}'
